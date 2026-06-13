@@ -1,0 +1,110 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node modules
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# Build outputs
+dist
+build
+.cache
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+
+# Testing
+coverage
+.nyc_output
+
+# Debug
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/
+temp-uploads/
+public/uploads/
+
+# Configuration files
+config/local.js
+config/development.js
+config/production.js
+
+# Backup files
+*.bak
+*.backup
+
+# Mongodb files
+dump/
+mongodump/
+
+# Redis
+dump.rdb
+
+# Misc
+.stylelintcache
+.eslintcache
+*.tsbuildinfo
+
+# npm
+.npm
+
+# eslint
+.eslintcache
+
+# yarn
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.pnp.*
+.pnp.js
+.yarnrc.yml
+
+# pnpm
+.pnpm-store
+
+# Temporary folders
+tmp
+temp
+
+# PM2
+.pm2
+
+# Nodemon
+nodemon-debug.json
