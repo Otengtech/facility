@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -11,35 +12,94 @@ import reportRoutes from './routes/reportRoutes.js';
 import User from './models/User.js';
 import bcrypt from 'bcryptjs';
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ============================================================
+// CORS CONFIGURATION - Allow both local and production
+// ============================================================
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://nathanielgyarteng.com',
+  'https://your-frontend.vercel.app', // Replace with your actual Vercel URL
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-// Routes
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-TOKEN', 'Accept'],
+}));
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ============================================================
+// API ROUTES
+// ============================================================
 app.use('/api/auth', authRoutes);
 app.use('/api/facilities', facilityRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 
-// Create admin user function
+// ============================================================
+// HEALTH CHECK ROUTE (For Vercel)
+// ============================================================
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Server is running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ============================================================
+// ROOT ROUTE
+// ============================================================
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Barber Shop API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      facilities: '/api/facilities',
+      bookings: '/api/bookings',
+      admin: '/api/admin',
+      reports: '/api/reports',
+      health: '/api/health',
+    },
+  });
+});
+
+// ============================================================
+// CREATE ADMIN USER FUNCTION
+// ============================================================
 const createAdminUser = async () => {
   try {
-    // Check if admin already exists
     const existingAdmin = await User.findOne({ role: 'admin' });
     
     if (!existingAdmin) {
-      // Create admin user
       const admin = new User({
         userType: 'internal',
         fullName: 'Oteng',
         email: 'oteng@admin.com',
         phone: '0593957373',
-        password: 'oteng@admin.com', // Change this in production
+        password: 'oteng@admin.com',
         studentStaffId: 'ADMIN001',
         department: 'Administration',
         role: 'admin'
@@ -57,13 +117,19 @@ const createAdminUser = async () => {
   }
 };
 
-// Database connection and server start
+// ============================================================
+// DATABASE CONNECTION & SERVER START (Local Only)
+// ============================================================
 const startServer = async () => {
   try {
-    await connectDB();
-    
-    // Create admin user after database connection
-    await createAdminUser();
+    // Only connect to MongoDB if not in Vercel serverless environment
+    // or if we're running locally
+    if (process.env.NODE_ENV !== 'production' || process.env.IS_LOCAL === 'true') {
+      await connectDB();
+      await createAdminUser();
+    } else {
+      console.log('🚀 Running in Vercel serverless mode - skipping DB connection on startup');
+    }
     
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
@@ -76,13 +142,12 @@ const startServer = async () => {
   }
 };
 
-startServer();
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || process.env.IS_LOCAL === 'true') {
+  startServer();
+}
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({ 
-    message: err.message || 'Something went wrong!',
-    success: false 
-  });
-});
+// ============================================================
+// EXPORT APP FOR VERCEL (Serverless)
+// ============================================================
+export default app;
